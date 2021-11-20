@@ -1,5 +1,6 @@
 # About The Project
 CS120B embedded system Custom final project.
+
 Author: [Tongyuan He](https://github.com/the1323) 
 
 # Introduction
