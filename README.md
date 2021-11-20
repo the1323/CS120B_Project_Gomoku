@@ -17,3 +17,4 @@ defined number of moves and time.
 * 
 # Reference 
 * [ILI9341 Datasheet](https://cdn-shop.adafruit.com/datasheets/ILI9341.pdf)
+* [ILI9341 Write Data Command Guide](https://ece353.engr.wisc.edu/external-devices/ili9341/)
