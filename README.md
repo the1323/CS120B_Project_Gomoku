@@ -5,7 +5,10 @@ Author: [Tongyuan He](https://github.com/the1323)
 
 
 * [Project Demo 1 (Week 8)](https://youtu.be/4v228h95QXc)
-
+Progress: LCD displays is working and customized fonts added, able to draw pixel or characters.
+          joystick mostly working, need fix sample time and make keep moving while holding. 
+          main is only used for testing, not yet a concurrent SM.
+          
 # Introduction
 Gomoku/ Five in a Row, is an abstract strategy board game. It's a two-player game
 one with white stones and one with black stones played on a Go board. The board
