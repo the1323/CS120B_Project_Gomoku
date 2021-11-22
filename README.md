@@ -2,9 +2,10 @@
 CS120B embedded system Custom final project.
 
 Author: [Tongyuan He](https://github.com/the1323) 
-*
-** [Project Demo 1 (Week 8)](https://youtu.be/4v228h95QXc)
-*
+
+
+* [Project Demo 1 (Week 8)](https://youtu.be/4v228h95QXc)
+
 # Introduction
 Gomoku/ Five in a Row, is an abstract strategy board game. It's a two-player game
 one with white stones and one with black stones played on a Go board. The board
