@@ -1,109 +1,232 @@
-#include<avr/io.h>
-#include<util/delay.h>
-#include<stdio.h>
-#include<stdbool.h>
-#include<inttypes.h>
-#include "io_lcd.h"
+/*	Author: Tongyuan He & the033@ucr.edu
+ *  Partner(s) Name: 
+ *	Lab Section:21
+ *	Assignment: Lab #11  Exercise #5
+ *	Demo Video: https://youtu.be/PkV9gSkrTFg
+ *             Full Playlist: https://www.youtube.com/playlist?list=PLGUGavrXPSvGQtA9dd-Y3l1FxD06JdU04
+ *	Exercise Description: [optional - include for your own benefit]
+ *  
+ *	I acknowledge all content contained herein, excluding template or example
+ *	code , is my own original work.
+ */
+#include <avr/interrupt.h>
+#include <avr/io.h>
+//#include "io.h"
+//#include "keypad.h"
+#include "scheduler.h"
+#include "timer.h"
+#ifdef _SIMULATE_
+#include "simAVRHeader.h"
+#endif 
 
 
 
-void ADC_init(void)
-{
-	ADMUX |= (1<<REFS0);
-	ADCSRA |= (1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0)|(1<<ADEN);
-}
-uint16_t ReadADC(uint8_t ADCchannel)
-{
-	//select ADC channel with safety mask
-	ADMUX = (ADMUX & 0xF0) | (ADCchannel & 0x0F);
-	//single conversion mode
-	ADCSRA |= (1<<ADSC);
-	// wait until ADC conversion is complete
-	while( ADCSRA & (1<<ADSC) );
-	return ADC;
-}
-int main(void)
-{
-	char joy []="w";
-	DDRA = 0x00; PORTA = 0xFF; //joystick
-	ADC_init();
-	unsigned short analog_X;
-	unsigned short analog_Y;
-	
-	
-	
-	LCD_init();
-	_delay_ms(200);
-	LCD_ClearScreen();
+enum user_input_SM {Init_user,user_on,user_off,release};
+
+int user_input_tick(int state) {
+	unsigned char Start_Button,Reset_Button,OK_button;
+	Start_Button = (~PIND & 0x01);
+	Reset_Button = (~PIND & 0x02);
+	OK_button = (~PIND & 0x04);
+	switch(state) {
+		case Init_user:
+		
+		
+		break;
+		
+		default:
+		break;
+	}
+	switch(state) {
+		case Init_user:
 		
 	
-	_delay_ms(5000);
-	int cnt =0;
-	char a[] = "a";
+		break;
+		
+		default:
+		break;
+	}
+	return state;
+}
 
-	a[0]+=cnt;
+
+
+enum sensor_input_SM {Init_sensor,sensor_on,sensor_off};
+
+int sensor_input_tick(int state) {
 	
-	LCD_Cursor(4,4);
+	
+	switch(state) {
+		case Init_sensor: 
+		 
+		
+		
+		break;
+		
+		default:
+		break;
+	}
+	switch(state) {
+		case Init_sensor:
+		
+		
+		break;
+		
+		default:
+		break;
+	}
+	return state;
+}
 
-	_delay_ms(2);
 
-	LCD_WriteString("Black Turn");
-	LCD_Cursor(190,4);
 
-	LCD_WriteString("100");
-	for(int y =20;y<260;y+=20){
-		for (int x =0;x<240;x++)
-		{LCD_DrawPixel(4+x,y+4,BLACK);
+enum InGame_SM {Init_game,Game_on,Game_over};
+
+int InGame_tick(int state) {
+
+	switch(state) {
+		case Init_game:
+		
+		break;
+		
+		default:
+		break;
+	}
+	switch(state) {
+		case Init_game:
+		
+		
+		break;
+		
+		default:
+		break;
+	}
+	return state;
+}
+
+	
+
+enum indicator_SM {Init_ind,ind_on,ind_over};
+
+int indicator_tick(int state) {
+
+	switch(state) {
+		case Init_ind:
+		
+		break;
+		
+		default:
+		break;
+	}
+	switch(state) {
+		case Init_ind:
+		
+		
+		break;
+		
+		default:
+		break;
+	}
+	return state;
+}
+
+
+
+
+enum display_SM { display_init,display };
+int display_tick(int state) {
+	
+	switch (state) {
+		case display_init:
+			LCD_init();
+			LCD_ClearScreen();
+		break;
+		
+			
+		default:
+		
+		break;
+	}
+
+	switch(state) {
+		case display_init:
+		
+		break;
+		
+	
+		default:
+		break;
+	}
+	return state;
+}
+
+
+int main()
+{
+	 DDRA = 0x00; PORTA = 0xFF; //joystick
+	
+	
+	 DDRD = 0xFF; PORTD = 0x00;
+	 
+	static task task1, task2,task3,task4,task5;
+	task *tasks[] = { &task1, &task2,&task3,&task4,&task5};
+	const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
+	
+	
+	
+	// get user input button,joystick
+	task1.state = Init_user;
+	task1.period = 60;
+	task1.elapsedTime = task1.period;
+	task1.TickFct = &user_input_tick;
+	
+	// get sensor input battery
+	task2.state =  Init_sensor;
+	task2.period = 300;
+	task2.elapsedTime = task2.period;
+	task2.TickFct = &sensor_input_tick;
+	
+	// main game logic
+	task3.state =  Init_game;
+	task3.period = 300;
+	task3.elapsedTime = task3.period;
+	task3.TickFct = &InGame_tick;
+	
+	//lcd display
+	task4.state =  display_init;
+	task4.period = 300;
+	task4.elapsedTime = task4.period;
+	task4.TickFct = &display_tick;
+	
+	//indicator outputs
+	task5.state =  Init_ind;
+	task5.period = 300;
+	task5.elapsedTime = task5.period;
+	task5.TickFct = &indicator_tick;
+	
+
+
+
+	TimerSet(10);
+	TimerOn();
+	
+	unsigned short i; // Scheduler for-loop iterator
+	while(1) {
+		// Scheduler code
+		for ( i = 0; i < numTasks; i++ ) {
+			// Task is ready to tick
+			if ( tasks[i]->elapsedTime == tasks[i]->period ) {
+				// Setting next state for task
+				tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
+				// Reset the elapsed time for next tick.
+				tasks[i]->elapsedTime = 0;
+			}
+			tasks[i]->elapsedTime += 10;
 		}
+		while(!TimerFlag);
+		TimerFlag = 0;
 	}
-	for(int y =20;y<240;y++){
-		for (int x =0;x<240;x+=20)
-		{LCD_DrawPixel(0+x,y+4,BLACK);
-		}
-	}
-	LCD_Cursor(4,24);
-	LCD_WriteChar('o');
-	LCD_Cursor(4,260);
-	LCD_WriteString("Time Left ");
-	LCD_Cursor(4,280);
 
-	LCD_WriteString("Black Score 123");
+	return 0;
+}	
 
-	LCD_Cursor(4,300);
-	LCD_WriteString("joystick");
-	char snum[5];
-	unsigned short t = 59;
-
-	while(1)
-	{
-		itoa(t, snum, 10);
-		LCD_Cursor(120,260);
-		LCD_WriteString(snum);
-		t--;
-		analog_X = ReadADC(0);
-		analog_Y = ReadADC(1);
-		_delay_ms(100);
-		LCD_Cursor(120,300);
-
-		itoa(t, snum, 10);
-		LCD_WriteString(joy);
-		
-		if (analog_X >= 900) { joy[0] = 'R'; }
-		else if (analog_X <= 200) { joy[0] = 'L'; }
-		else if (analog_Y >= 900) { joy[0] = 'U'; }
-		else if (analog_Y <= 200) {joy[0] = 'D'; }
-		else { joy[0] = 'w'; }
-		
-		LCD_Cursor(4,300);
-		itoa(analog_Y, snum, 10);
-
-		//if(analog_Y<200)break;
-		_delay_ms(5000);
-		
-
-
-
-	}
-	
-
-}
