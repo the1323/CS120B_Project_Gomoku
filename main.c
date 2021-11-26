@@ -1,9 +1,8 @@
 /*	Author: Tongyuan He & the033@ucr.edu
  *  Partner(s) Name: 
  *	Lab Section:21
- *	Assignment: Lab #11  Exercise #5
- *	Demo Video: https://youtu.be/PkV9gSkrTFg
- *             Full Playlist: https://www.youtube.com/playlist?list=PLGUGavrXPSvGQtA9dd-Y3l1FxD06JdU04
+ *	Assignment: UCR EE/CS 120B Fall 2021 Project Demo 2. Week 9
+ *	Demo Video: https://youtu.be/EeI6JZlMs7A
  *	Exercise Description: [optional - include for your own benefit]
  *  
  *	I acknowledge all content contained herein, excluding template or example
@@ -13,31 +12,44 @@
 #include <avr/io.h>
 //#include "io.h"
 //#include "keypad.h"
+#include <avr/eeprom.h>
 #include "scheduler.h"
 #include "timer.h"
 #ifdef _SIMULATE_
 #include "simAVRHeader.h"
 #endif 
 
-unsigned char current_player=1,Accept_button=0, Accept_joy=0;  //1=black,2=white
+//uint8_t ByteOfData =8,value;//char R_array[15],W_array[15] = "EEPROM TESsss";
+unsigned char current_player=1,Accept_button=0, Accept_joy=0,winner=0;  //1=black,2=white
 unsigned char direction=0,Gcurser_x=5,Gcurser_y=5; //joystick shared
 unsigned char GStart_Button,GReset_Button,GOK_Button;
-unsigned short batterylife=100,bscore=0,wscore=10;
-unsigned char board [12][12] ={0}; //init game board with 0, ps: 1=black,2=white
+unsigned short batterylife=100,bscore=0,wscore=0;
+unsigned char board [12][12]; //init game board with 0, ps: 1=black,2=white
+
 void ADC_init(void)
 {
 	ADMUX |= (1<<REFS0);
 	ADCSRA |= (1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0)|(1<<ADEN);
 }
-uint16_t ReadADC(uint8_t ADCchannel)
+uint16_t ReadADC(uint8_t joy_pin)
 {
-	//select ADC channel with safety mask
-	ADMUX = (ADMUX & 0xF0) | (ADCchannel & 0x0F);
-	//single conversion mode
+	ADMUX = (ADMUX & 0xF0) | ( joy_pin & 0x03);
 	ADCSRA |= (1<<ADSC);
-	// wait until ADC conversion is complete
 	while( ADCSRA & (1<<ADSC) );
 	return ADC;
+}
+
+
+void resetboard(void){
+	for(int i =0;i< 12;i++){
+		for(int j=0;j<12;j++){
+			board[i][j]=0;
+		}
+	}
+	Gcurser_y=Gcurser_x=5;
+	bscore=wscore=winner=0;
+	current_player=1;
+	savegame();
 }
 unsigned char move (unsigned char x,unsigned char y,unsigned char player)
 {
@@ -47,7 +59,43 @@ unsigned char move (unsigned char x,unsigned char y,unsigned char player)
 		return 1;
 	}
 }
-
+void loadgame(void){
+	int x=0,y=0,previous=-1;
+	//unsigned char invalid=0;
+	for(int i=0;i<12;i++){
+		for(int j =0;j<12;j++){
+			board[i][j] = eeprom_read_byte ((const uint8_t*)(i*100+j));//i*100+j is address 
+			if(board[i][j]!=1 && board[i][j] !=2) board[i][j]=0;
+			//if( board[i][j]==previous) invalid=1;
+			//previous=board[i][j];
+		}
+	
+	}
+	bscore= eeprom_read_byte ((const uint8_t*)2001);
+	wscore= eeprom_read_byte ((const uint8_t*)2002);
+	current_player= eeprom_read_byte ((const uint8_t*)2003);
+	if(bscore==255 || wscore==255|| current_player>2){
+		bscore=wscore=0;
+		current_player=1;
+		return;
+	}
+	//else if(current_player==1) current_player=2;
+	//if( invalid){
+		//board = 0;
+	//}
+}
+	
+void savegame(void){
+	int x=0,y=0;
+	for(int i=0;i<12;i++){
+		for(int j =1;j<12;j++){
+			eeprom_update_byte (( uint8_t *) (i*100+j), board[i][j] );
+		}
+	}
+	eeprom_update_byte (( uint8_t *) 2001,bscore);
+	eeprom_update_byte (( uint8_t *) 2002,wscore);
+	eeprom_update_byte (( uint8_t *) 2003,current_player);
+}
 void show_stone(void){
 	int x=0,y=0;
 	for(int i=0;i<12;i++){
@@ -58,14 +106,42 @@ void show_stone(void){
 		}
 	}
 }
+int checkwin(int cx, int cy ,int xoffset,int yoffset){
+	int turn = board[cx][cy];
+	if (turn ==0) return 0;
+	int counta=0,countb=0;
+
+	for (int i = 1; i < 6; i++){// check right,down
+		if(board[cx+(xoffset*i)][cy+(yoffset*i)]==turn) counta++;
+		else break;
+	}
+	for (int i = 1; i < 6; i++){// check left,up
+		if(board[cx+(xoffset*i*(-1))][cy+(yoffset*i*(-1))]==turn) countb++;
+		else break;
+	}
+	return 1+counta+countb;
+
+}
+int max(int cx, int cy ){
+	if(cx>cy) return cx;
+	else return cy;
+}
+int check_alldir(int cx, int cy ){
+	int xwin = checkwin(cx,cy,1,0);//x-axis
+	int ywin = checkwin(cx,cy,0,1);//y-axis
+	int lrwin= checkwin(cx,cy,-1,1);// '\'-axis
+	int rlwin= checkwin(cx,cy,1,1);// '/'-axis
+	int final = max(max(xwin,ywin),max(lrwin,rlwin)); //max of the 4
+	return final;
+}
 
 enum user_input_SM {Init_user,user_press,start_hold,reset_hold,ok_hold,user_release};
 
 int user_input_tick(int state) {
 	unsigned char Start_Button,Reset_Button,OK_Button;
-	Start_Button = (~PIND & 0x01);
-	Reset_Button = (~PIND & 0x02);
-	OK_Button = (~PIND & 0x04);
+	Start_Button = (~PINA & 0x04);
+	Reset_Button = (~PINA & 0x08);
+	OK_Button = (~PINA & 0x10);
 	
 	switch(state) {
 		case Init_user:
@@ -136,8 +212,8 @@ int user_input_tick(int state) {
 enum joystck_SM {Init_joy,joy_action};
 	
 int joystck_tick(int state) {
-	unsigned short analog_X = ReadADC(0);
-	unsigned short analog_Y = ReadADC(1);
+	unsigned short analog_X = ReadADC(1);//temp changed to 1
+	unsigned short analog_Y = ReadADC(0);// temp changed to 0
 	
 	
 	switch(state) {
@@ -167,8 +243,10 @@ int joystck_tick(int state) {
 				
 				if (analog_X <= 400) { direction=1;} //left
 				else if (analog_X >= 900) { direction=2;}//right
-				else if (analog_Y >= 900) { direction=3;}//up
-				else if (analog_Y <= 400) {direction=4;}//down
+				//else if (analog_Y >= 900) { direction=3;}//up
+				//else if (analog_Y <= 400) {direction=4;}//down //real pos
+				else if (analog_Y <= 400) { direction=3;}//up	//temp changed for this bread board
+				else if (analog_Y >= 900) {direction=4;}//down
 				else direction=0;
 			}
 		break;
@@ -209,7 +287,7 @@ int sensor_input_tick(int state) {
 
 
 
-enum InGame_SM {Init_game,Game_on,Game_over};
+enum InGame_SM {Init_game,Game_on};
 
 int InGame_tick(int state) {
 
@@ -262,7 +340,7 @@ int indicator_tick(int state) {
 
 
 
-enum display_SM { display_init,display };
+enum display_SM { display_init,display,Game_over };
 unsigned char flashstart=1;
 int display_tick(int state) {
 	
@@ -272,7 +350,6 @@ int display_tick(int state) {
 				LCD_init();
 				LCD_ClearScreen();
 
-				
 				LCD_Cursor(40,40);
 				LCD_WriteString("Let's go");
 				LCD_Cursor(120,80);
@@ -292,7 +369,18 @@ int display_tick(int state) {
 		
 		state=display;
 		break;
+		case Game_over:
 		
+		if(GStart_Button){//restart game and everything else
+			if (winner){
+				resetboard();
+			}
+			
+			state=display_init;
+			break;
+		}
+		else state=Game_over;
+		break;
 			
 		default:
 		
@@ -304,6 +392,7 @@ int display_tick(int state) {
 			
 		break;
 		case display:
+		
 			if(!GStart_Button && !Accept_joy){ //flash "Press START !" while no input
 				
 				LCD_Cursor(40,200);
@@ -317,14 +406,21 @@ int display_tick(int state) {
 				LCD_ClearScreen();
 				
 				LCD_DrawBoard();
-				LCD_ShowPlayer(1);//show black/white turn
+				loadgame();
+				LCD_ShowPlayer(current_player);//show black/white turn
 				LCD_ShowBattery(100);//show battery percent
 				LCD_ShowScore(0,0);
+				
+				//board[0][1] = eeprom_read_byte ((const uint8_t*)0);//i*100+j is address
+				show_stone();
 				Accept_joy=1;
+				//eeprom_update_byte (( uint8_t *) 0, 1 );
+				
 				
 			}
 			if(Accept_joy){//ingame
-				
+				//int life = (~PINA & 0x20);
+				LCD_ShowBattery(1);
 				if(direction==0){ //move gcurser by joystick
 					LCD_GameCursor(Gcurser_x,Gcurser_y);
 				}
@@ -341,6 +437,7 @@ int display_tick(int state) {
 				if(GReset_Button){//reset game and everything else
 					Accept_button=0;
 					Accept_joy=0;
+					resetboard();
 					state=display_init;
 					break;
 				}
@@ -348,12 +445,42 @@ int display_tick(int state) {
 					//LCD_Cursor(2,260);
 					//LCD_WriteString("okok" );
 					if(current_player==1){
-						if(move(Gcurser_x,Gcurser_y,current_player))
-						 current_player=2; //black put stone
+						
+						if(move(Gcurser_x,Gcurser_y,current_player)){
+							int tempscore = check_alldir(Gcurser_x,Gcurser_y);
+							if(bscore<tempscore) bscore=tempscore;
+							if(tempscore>4){//game black won
+								winner=1;
+								LCD_Cursor(40,160);
+								LCD_WriteString("Black");
+								state=Game_over;
+								break;
+							}
+							
+							//eeprom_update_byte (( uint8_t *) 0, 1 );
+							current_player=2; //black put stone
+							savegame();
+						}
+						 
 					}
-					else if(move(Gcurser_x,Gcurser_y,current_player) ) current_player=1;//white put stone
+					else if(move(Gcurser_x,Gcurser_y,current_player) ){
+						int tempscore = check_alldir(Gcurser_x,Gcurser_y);
+						if(wscore<tempscore) wscore=tempscore;
+						if(tempscore>4){//game white won
+							winner=2;
+							LCD_Cursor(40,160);
+							LCD_WriteString("White");
+							state=Game_over;
+							break;
+						}
+							+0
+							current_player=1;//white put stone
+							savegame();
+						} 
+					
 					
 				}
+				LCD_ShowScore(bscore,wscore);
 				show_stone();
 				LCD_ShowPlayer(current_player);
 			}//end if accept joy 
@@ -362,7 +489,18 @@ int display_tick(int state) {
 			
 			
 		break;
-	
+		
+		case Game_over:
+
+			
+			Accept_joy=0;
+			LCD_Cursor(140,160);
+			LCD_WriteString("Win !");
+			LCD_Cursor(40,200);
+			LCD_WriteString("Press START !");
+			
+		
+		break;
 		default:
 		break;
 	}
@@ -372,11 +510,18 @@ int display_tick(int state) {
 
 int main()
 {
-	 DDRA = 0x00; PORTA = 0xFF; //joystick
+	 DDRA = 0x00; PORTA = 0xFF; //joystick ,buttons 
 	
 	
-	 DDRD = 0x00; PORTD = 0xFF;//buttons
-	 
+	 DDRD = 0x00; PORTD = 0xFF;
+	
+	
+	
+							
+	//eeprom_update_byte (( uint8_t *) 9000, ByteOfData );
+	
+	//value = eeprom_read_byte ((const uint8_t*)9000);				
+		
 	static task task1, task2,task3,task4,task5,task6;
 	task *tasks[] = { &task1, &task2,&task3,&task4,&task5,&task6};
 	const unsigned short numTasks = sizeof(tasks)/sizeof(task*);

@@ -33,6 +33,15 @@ void LCD_DrawPixel(uint16_t x3,uint16_t y3,uint16_t colour1);
 void LCD_DrawBlock(uint16_t x,uint16_t y,uint16_t w,uint16_t h,uint16_t colour);
 void LCD_WriteChar( unsigned char c);
 void LCD_WriteString(unsigned char* c);
+void LCD_WriteInt(int i);
 void LCD_Cursor(uint16_t x,uint16_t y);
+void delay_ms(int t);
+/////////////////////////////////////////////////////////////////
+void LCD_DrawBoard();
+void LCD_ShowPlayer(unsigned char i);
+void LCD_ShowBattery(unsigned short i);
+void LCD_ShowScore(unsigned short b,unsigned short w);
+void LCD_GameCursor(unsigned char x,unsigned char y);
 
+void LCDGAMEINTI();
 #endif // IO_LCD_H

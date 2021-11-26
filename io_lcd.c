@@ -1,5 +1,9 @@
 #include "io_lcd.h"
-
+//#include<avr/io.h>
+//#include<util/delay.h>
+//#include<stdio.h>
+//#include<stdbool.h>
+//#include<inttypes.h>
 volatile uint16_t LCD_W=240, LCD_H=320;
 volatile uint16_t cursor_x, cursor_y;
 static const unsigned char font[] PROGMEM = {
@@ -298,7 +302,14 @@ void LCD_WriteData16(uint16_t data)//split data write
 	LCD_WriteData8(data);
 }
 
+void delay_ms(int t){
 
+	for(int i=0;i<t;i++)
+	for(int j=0;j<775;j++)
+	{
+		asm("nop");
+	}
+}
 void LCD_init(void)
 {
 	LCD_Setup();
@@ -427,6 +438,7 @@ void LCD_init(void)
 	LCD_WriteCommand(0x36);
 	LCD_WriteCommand(0x21);// inverse color and dir
 	LCD_WriteData8(0x80|0x08);
+	delay_ms(100);
 
 }
 
@@ -514,6 +526,11 @@ void LCD_WriteString(unsigned char* c){
 		cursor_x+=12;
 	}
 }
+void LCD_WriteInt(int i){
+	char str[10];
+	itoa(i,str,10);
+	LCD_WriteString(str);
+}
 void LCD_WriteChar(unsigned char c) 
 {
 	uint8_t size=2;
@@ -542,7 +559,85 @@ void LCD_Cursor(uint16_t x,uint16_t y)
 
 
 
+void LCD_DrawBoard(){
+	
+	for(int y =20;y<260;y+=20){
+		for (int x =0;x<240;x++)
+		{LCD_DrawPixel(x,y+4,BLACK);
+		}
+	}
+	for(int y =20;y<240;y++){
+		for (int x =0;x<240;x+=20)
+		{LCD_DrawPixel(0+x,y+4,BLACK);
+		}
+	}
+	LCD_Cursor(4,280);
+	LCD_WriteString("Black Score ");
+	LCD_Cursor(4,300);
+	LCD_WriteString("White Score ");
+	LCD_Cursor(76,4);
+	LCD_WriteString("Turn");
+	
+}
 
+void LCD_ShowPlayer(unsigned char i){
+	LCD_Cursor(4,4);
+	if(i==1) {
+		LCD_WriteString("Black Turn");
+	}
+	else LCD_WriteString("White Turn");
+}
+void LCD_ShowBattery(unsigned short i){
+	float voltage=i/9.7;
+	
+	LCD_Cursor(190,4);
+	char str[10];
+	itoa(i,str,10);
+	LCD_WriteString(str);
 
+}
+void LCD_ShowScore(unsigned short b,unsigned short w){
+	
+	char str[10];
+	itoa(b,str,10);
+	LCD_Cursor(200,280);
+	LCD_WriteString(str);
+	LCD_Cursor(200,300);
+	itoa(w,str,10);
+	LCD_WriteString(str);
 
+}
+void LCD_GameCursor(unsigned char x,unsigned char y){
+	//x,y are not pixel position, it's grid position 
+	unsigned char cx=20*x;
+	unsigned char cy=20*y;
+	
+	if(cx>240 || cy>240) return;
+	//while(1){
+		//if (dir==1)
+		//{ LCD_Cursor(5+20*x-20,5+20*y);
+		 //LCD_WriteChar(' ');
+		//}
+		LCD_Cursor(5+20*x,5+20*y);
+		LCD_WriteChar('p');
+		LCD_Cursor(5+20*x,5+20*y);
+		delay_ms(50);
+		LCD_WriteChar('q');
+		LCD_Cursor(5+20*x,5+20*y);
+		delay_ms(50);
+	//}
+	
 
+}
+
+void LCDGAMEINTI(){
+	//delay_ms(100);
+	LCD_init();
+	LCD_ClearScreen();
+	LCD_DrawBoard();
+	LCD_ShowPlayer(1);//show black/white turn
+	LCD_ShowBattery(100);//show battery percent
+	LCD_ShowScore(0,0);
+	//delay_ms(100);
+
+}
