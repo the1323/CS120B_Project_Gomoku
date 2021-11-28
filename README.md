@@ -3,6 +3,10 @@ CS120B embedded system Custom final project.
 
 Author: [Tongyuan He](https://github.com/the1323) 
 
+* [Project Demo 2 (Week 9)](https://youtu.be/EeI6JZlMs7A)
+Progress: Game is playable, joystick and EEPROM works perfectly, no overflow or bug found yet.
+          Still need work on appearance, touch screen, indicators, etc.
+
 
 * [Project Demo 1 (Week 8)](https://youtu.be/4v228h95QXc)
 Progress: LCD displays is working and customized fonts added, able to draw pixel or characters.
