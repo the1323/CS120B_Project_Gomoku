@@ -30,7 +30,7 @@ defined number of moves and time.
 * [ILI9341 Datasheet](https://cdn-shop.adafruit.com/datasheets/ILI9341.pdf)
 * [ILI9341 Write Data Command Guide](https://ece353.engr.wisc.edu/external-devices/ili9341/)
 * [ILI9341 Graphic Library](https://community.atmel.com/projects/ili9341-library-drive-22-tft-displayderived-adafruit-tft-library-ili9340-type-controller)
-*  *using power management and power,gama correction commands as is, the order also listed in data sheet pg 83-85.
+*  *using power management and power,gamma correction commands as is, the order also listed in datasheet pg 83-85.
 * Course Provided 16x2 LCD Library
 * Course Provided Analog Digital Convertion
 * 
