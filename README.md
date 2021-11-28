@@ -26,6 +26,7 @@ defined number of moves and time.
 * [to be added](https://google.com/)
 * 
 # Reference 
+* [ATmega1284P Datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/doc8059.pdf)
 * [ILI9341 Datasheet](https://cdn-shop.adafruit.com/datasheets/ILI9341.pdf)
 * [ILI9341 Write Data Command Guide](https://ece353.engr.wisc.edu/external-devices/ili9341/)
 * [ILI9341 Graphic Library](https://community.atmel.com/projects/ili9341-library-drive-22-tft-displayderived-adafruit-tft-library-ili9340-type-controller)
