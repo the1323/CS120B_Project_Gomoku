@@ -19,7 +19,8 @@
 #include "simAVRHeader.h"
 #endif 
 
-//uint8_t ByteOfData =8,value;//char R_array[15],W_array[15] = "EEPROM TESsss";
+//uint8_t ByteOfData =8,value;
+//char R_array[15],W_array[15] = "EEPROM TESsss";
 unsigned char current_player=1,Accept_button=0, Accept_joy=0,winner=0;  //1=black,2=white
 unsigned char direction=0,Gcurser_x=5,Gcurser_y=5; //joystick shared
 unsigned char GStart_Button,GReset_Button,GOK_Button;
